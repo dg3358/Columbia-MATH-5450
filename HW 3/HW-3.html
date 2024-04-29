@@ -8629,14 +8629,11 @@ In order to generate a simulation, then, I have to simulate short rates at many 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Note that the discount factor for a zero-coupon bond is equal to $e^{-\int_t^{T}r_sds}$. I approxmiate this with a riemann sum with the area of each rectangle being 1/360 times the rate at the given moment:
-$$
--\int_t^{T}r_sds \approx -\frac{1}{360}\sum_{i = t}^{T}r_i
-$$</p>
+<p>Next, I take the averages of each simulation as my estimate for short rate in each case. I use the "PyCurve" package to perform linear interpolation to build out the yield curve:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8644,48 +8641,14 @@ $$</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">short_rates</span> <span class="o">=</span> <span class="n">simulations</span><span class="o">/</span><span class="mi">100</span>
-<span class="n">integral_approx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">360</span><span class="p">)</span> <span class="o">*</span> <span class="n">short_rates</span>
-<span class="n">exp_disc_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">integral_approx</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">disc_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_disc_factor</span><span class="p">)</span>
-<span class="n">disc_factors</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">short_rate_estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">simulations</span><span class="p">,</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="o">/</span><span class="mi">12</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">30</span><span class="p">])</span>
+<span class="n">curves</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">short_rate_estimate</span><span class="p">)):</span>
+    <span class="n">rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">short_rate_estimate</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">spread</span><span class="o">.</span><span class="n">values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">curves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">LinearCurve</span><span class="p">(</span><span class="n">Curve</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">rates</span><span class="p">)))</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>array([[0.9998452 , 0.99969162, 0.99953912, ..., 0.81601602, 0.81593779,
-        0.8158573 ],
-       [0.99985016, 0.99969801, 0.99954591, ..., 0.86761525, 0.86760898,
-        0.86760077],
-       [0.99984812, 0.99969687, 0.99954285, ..., 0.8055124 , 0.80544143,
-        0.80537108],
-       ...,
-       [0.99985064, 0.99970219, 0.99955417, ..., 0.86419489, 0.86414454,
-        0.86409596],
-       [0.999852  , 0.99970594, 0.99956051, ..., 0.83086914, 0.83080275,
-        0.83073652],
-       [0.99984963, 0.99969836, 0.99954693, ..., 0.8406601 , 0.8406195 ,
-        0.84057803]])</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Given these discount factors, I can generate the yield curve:</p>
 </div>
 </div>
 </div>
@@ -8720,12 +8683,13 @@ $$</p>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">Notional</span> <span class="o">=</span> <span class="mi">10000000</span>
-<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">30</span><span class="p">])</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="o">/</span><span class="mi">12</span><span class="p">,</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">30</span><span class="p">])</span>
 <span class="n">rate</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:]</span><span class="o">.</span><span class="n">values</span>
 <span class="n">curve</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>
-<span class="n">linear_curve</span> <span class="o">=</span> <span class="n">CubicCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">)</span>
+<span class="n">linear_curve</span> <span class="o">=</span> <span class="n">LinearCurve</span><span class="p">(</span><span class="n">curve</span><span class="p">)</span>
 <span class="n">discount_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">linear_curve</span><span class="o">.</span><span class="n">df_t</span><span class="p">(</span><span class="n">t_i</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">))])</span>
-<span class="n">forward_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">linear_curve</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">t_i</span><span class="o">/</span><span class="mi">4</span><span class="p">,(</span><span class="n">t_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">20</span><span class="p">)])</span>
+<span class="n">forward_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">linear_curve</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">t_i</span><span class="o">/</span><span class="mi">4</span><span class="p">,(</span><span class="n">t_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">20</span><span class="p">)])</span>
+<span class="n">forward_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">forward_rates</span><span class="p">)</span>
 <span class="n">variable_leg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">forward_rates</span><span class="o">/</span><span class="mi">100</span> <span class="o">*</span> <span class="n">Notional</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -8797,140 +8761,140 @@ $$</p>
 <th>0</th>
 <td>0.25</td>
 <td>450000.0</td>
-<td>545000.00</td>
+<td>548000.0</td>
 <td>0.986821</td>
 </tr>
 <tr>
 <th>1</th>
 <td>0.50</td>
 <td>450000.0</td>
-<td>527000.00</td>
+<td>527000.0</td>
 <td>0.974231</td>
 </tr>
 <tr>
 <th>2</th>
 <td>0.75</td>
 <td>450000.0</td>
-<td>501053.77</td>
-<td>0.962395</td>
+<td>501500.0</td>
+<td>0.962385</td>
 </tr>
 <tr>
 <th>3</th>
 <td>1.00</td>
 <td>450000.0</td>
-<td>478946.23</td>
+<td>478500.0</td>
 <td>0.951203</td>
 </tr>
 <tr>
 <th>4</th>
 <td>1.25</td>
 <td>450000.0</td>
-<td>468872.48</td>
-<td>0.940367</td>
+<td>481750.0</td>
+<td>0.940079</td>
 </tr>
 <tr>
 <th>5</th>
 <td>1.50</td>
 <td>450000.0</td>
-<td>464944.58</td>
-<td>0.929743</td>
+<td>469250.0</td>
+<td>0.929362</td>
 </tr>
 <tr>
 <th>6</th>
 <td>1.75</td>
 <td>450000.0</td>
-<td>461891.33</td>
-<td>0.919305</td>
+<td>456750.0</td>
+<td>0.919041</td>
 </tr>
 <tr>
 <th>7</th>
 <td>2.00</td>
 <td>450000.0</td>
-<td>456291.61</td>
+<td>444250.0</td>
 <td>0.909106</td>
 </tr>
 <tr>
 <th>8</th>
 <td>2.25</td>
 <td>450000.0</td>
-<td>446335.64</td>
-<td>0.899234</td>
+<td>447500.0</td>
+<td>0.899209</td>
 </tr>
 <tr>
 <th>9</th>
 <td>2.50</td>
 <td>450000.0</td>
-<td>436479.84</td>
-<td>0.889679</td>
+<td>438500.0</td>
+<td>0.889612</td>
 </tr>
 <tr>
 <th>10</th>
 <td>2.75</td>
 <td>450000.0</td>
-<td>428853.17</td>
-<td>0.880386</td>
+<td>429500.0</td>
+<td>0.880306</td>
 </tr>
 <tr>
 <th>11</th>
 <td>3.00</td>
 <td>450000.0</td>
-<td>424331.36</td>
+<td>420500.0</td>
 <td>0.871284</td>
 </tr>
 <tr>
 <th>12</th>
 <td>3.25</td>
 <td>450000.0</td>
-<td>423214.48</td>
-<td>0.862300</td>
+<td>444000.0</td>
+<td>0.861872</td>
 </tr>
 <tr>
 <th>13</th>
 <td>3.50</td>
 <td>450000.0</td>
-<td>423721.39</td>
-<td>0.853399</td>
+<td>440000.0</td>
+<td>0.852643</td>
 </tr>
 <tr>
 <th>14</th>
 <td>3.75</td>
 <td>450000.0</td>
-<td>425177.99</td>
-<td>0.844560</td>
+<td>436000.0</td>
+<td>0.843594</td>
 </tr>
 <tr>
 <th>15</th>
 <td>4.00</td>
 <td>450000.0</td>
-<td>427397.24</td>
-<td>0.835768</td>
+<td>432000.0</td>
+<td>0.834721</td>
 </tr>
 <tr>
 <th>16</th>
 <td>4.25</td>
 <td>450000.0</td>
-<td>430192.12</td>
-<td>0.827013</td>
+<td>428000.0</td>
+<td>0.826020</td>
 </tr>
 <tr>
 <th>17</th>
 <td>4.50</td>
 <td>450000.0</td>
-<td>433375.63</td>
-<td>0.818288</td>
+<td>424000.0</td>
+<td>0.817488</td>
 </tr>
 <tr>
 <th>18</th>
 <td>4.75</td>
 <td>450000.0</td>
-<td>436760.73</td>
-<td>0.809589</td>
+<td>420000.0</td>
+<td>0.809121</td>
 </tr>
 <tr>
 <th>19</th>
 <td>5.00</td>
 <td>450000.0</td>
-<td>440160.41</td>
+<td>416000.0</td>
 <td>0.800917</td>
 </tr>
 </tbody>
@@ -8974,7 +8938,7 @@ $$</p>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>-103457.26536739897</pre>
+<pre>-109417.72220558394</pre>
 </div>
 </div>
 </div>
@@ -8986,7 +8950,7 @@ $$</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Thus, as of this moment, this interest rate swap is worth $-\$103,457.27$ to me - not a good investment!</p>
+<p>Thus, as of this moment, this interest rate swap is worth $-\$109,417.72$ to me - not a good investment!</p>
 </div>
 </div>
 </div>
@@ -9008,7 +8972,7 @@ $$</p>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>I know that the fixed leg in any simulation only various based on the discount factors calculated for each simulation at each quarter mark for the year:</p>
+<p>For each simulated yield curve and each point, I calculate the prices both before and after each fixed and variable leg are exchanged:</p>
 </div>
 </div>
 </div>
@@ -9020,21 +8984,17 @@ $$</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">fixed_for_sim</span> <span class="o">=</span> <span class="mf">.045</span> <span class="o">*</span> <span class="n">Notional</span> <span class="o">*</span> <span class="n">disc_factors</span><span class="p">[:,[(</span><span class="n">pmt</span> <span class="o">*</span> <span class="mi">90</span><span class="p">)</span>  <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">pmt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">)]]</span>
-<span class="n">fixed_for_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fixed_for_sim</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">prices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="mi">19</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">curves</span><span class="p">)):</span>
+    <span class="n">discount_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">curves</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">df_t</span><span class="p">(</span><span class="n">t_i</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">21</span><span class="p">))])</span>
+    <span class="n">forward_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">curves</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">t_i</span><span class="o">/</span><span class="mi">4</span><span class="p">,(</span><span class="n">t_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">20</span><span class="p">)])</span>
+    <span class="n">forward_rates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">short_rate_estimate</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span><span class="n">forward_rates</span><span class="p">)</span>
+    <span class="n">variable_leg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">forward_rates</span><span class="o">/</span><span class="mi">100</span> <span class="o">*</span> <span class="n">Notional</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">times</span><span class="p">,</span> <span class="n">fixed_leg</span><span class="p">,</span> <span class="n">variable_leg</span><span class="p">,</span> <span class="n">discount_factors</span><span class="p">))))</span>
+    <span class="n">summary</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Time (in years)"</span><span class="p">,</span> <span class="s2">"Fixed Leg"</span><span class="p">,</span> <span class="s2">"Variable Leg"</span><span class="p">,</span> <span class="s2">"Discount Factor"</span><span class="p">]</span>
+    <span class="c1">#insert calculation to get prices here --- Ran out of time</span>
 </pre></div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>For the variable curve, I need to generate the yield curves, and generate the implied forward rates</p>
 </div>
 </div>
 </div>
